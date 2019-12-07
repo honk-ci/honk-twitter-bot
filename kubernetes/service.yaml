@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: honk-service
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: honk-twitter-bot
+    app.kubernetes.io/managed-by: honk
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
