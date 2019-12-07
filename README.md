@@ -1,2 +1,2 @@
 # honk-twitter-bot
-A honk simple twitter bot that reply honk slash command
+A simple honk twitter bot that reply honk slash command
