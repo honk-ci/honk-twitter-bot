@@ -1,0 +1,25 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: honk-twitter-bot
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  suspend: false
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: honk-twitter-bot
+            image: "ctadeu/honk_twitter_bot:0.1"
+            imagePullPolicy: IfNotPresent
+            volumeMounts:
+            - name: honk-twitter-config
+              mountPath: /app/config
+          volumes:
+          - name: honk-twitter-config
+            secret:
+              secretName: honk-twitter-config
+          restartPolicy: Never
