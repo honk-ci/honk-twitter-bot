@@ -77,7 +77,7 @@ func checkHonkReply(twitterAPI *anaconda.TwitterApi, tweet anaconda.Tweet) bool 
 }
 
 func processHonk(twitterAPI *anaconda.TwitterApi, tweet anaconda.Tweet) {
-	commandMatch := regexp.MustCompile(`(?mi)^/(?:honk)(?: +(.+?))?\s*$`)
+	commandMatch := regexp.MustCompile(`(?: +(.+?))?\s*/(?:honk)(?: +(.+?))?\s*$`)
 
 	tweetTime, _ := tweet.CreatedAtTime()
 	log.Printf("Checking Tweet from @%s ID = %s Text = %s TweetTime = %s\n", tweet.User.ScreenName, tweet.IdStr, tweet.Text, tweetTime.UTC())
