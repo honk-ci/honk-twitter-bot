@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/url"
 	"os"
 	"os/signal"
@@ -16,7 +17,20 @@ import (
 	"github.com/ChimeraCoder/anaconda"
 )
 
+var (
+	commandHonkMatch  = regexp.MustCompile(`(?mi)^*/(?:honk)(?: +(.+?))?\s*$`)
+	commandMeowMatch  = regexp.MustCompile(`(?mi)^*/(?:meow)(?: +(.+?))?\s*$`)
+	commandPonyMatch  = regexp.MustCompile(`(?mi)^*/(?:pony)(?: +(.+?))?\s*$`)
+	commandWoofMatch  = regexp.MustCompile(`(?mi)^*/(?:woof)(?: +(.+?))?\s*$`)
+	commandOinkMatch  = regexp.MustCompile(`(?mi)^*/(?:oink)(?: +(.+?))?\s*$`)
+	commandQuackMatch = regexp.MustCompile(`(?mi)^*/(?:quack)(?: +(.+?))?\s*$`)
+	commandMooMatch   = regexp.MustCompile(`(?mi)^*/(?:moo)(?: +(.+?))?\s*$`)
+	commandBaaMatch   = regexp.MustCompile(`(?mi)^*/(?:baa)(?: +(.+?))?\s*$`)
+)
+
 func main() {
+	rand.Seed(time.Now().UnixNano())
+
 	var flagConfigFile string
 	flag.StringVar(&flagConfigFile, "config", "config-honk.json", "Configuration file for the honk bot.")
 	flag.Parse()
@@ -31,9 +45,9 @@ func main() {
 	api := anaconda.NewTwitterApiWithCredentials(Config.TwitterAccessToken, Config.TwitterAccessSecret, Config.TwitterConsumerKey, Config.TwitterConsumerSecretKey)
 
 	streamValues := url.Values{}
-	streamValues.Set("track", "/honk")
+	streamValues.Set("track", "/honk,/meow,/pony,/woof,/oink,/quack,/moo,/baa")
 	streamValues.Set("stall_warnings", "true")
-	log.Println("Starting Stream...")
+	log.Println("Starting Honk Stream...")
 	s := api.PublicStreamFilter(streamValues)
 
 	go func() {
@@ -46,7 +60,7 @@ func main() {
 		}
 	}()
 
-	// Wait for SIGINT and SIGTERM (HIT CTRL-C)
+	// Wait for SIGINT and SIGTERM
 	ch := make(chan os.Signal)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	log.Println(<-ch)
@@ -77,11 +91,27 @@ func checkHonkReply(twitterAPI *anaconda.TwitterApi, tweet anaconda.Tweet) bool 
 }
 
 func processHonk(twitterAPI *anaconda.TwitterApi, tweet anaconda.Tweet) {
-	commandMatch := regexp.MustCompile(`(?: +(.+?))?\s*/(?:honk)(?: +(.+?))?\s*$`)
-
 	tweetTime, _ := tweet.CreatedAtTime()
 	log.Printf("Checking Tweet from @%s ID = %s Text = %s TweetTime = %s\n", tweet.User.ScreenName, tweet.IdStr, tweet.Text, tweetTime.UTC())
-	if commandMatch.MatchString(tweet.Text) {
+	if commandHonkMatch.MatchString(tweet.Text) || commandMeowMatch.MatchString(tweet.Text) ||
+		commandPonyMatch.MatchString(tweet.Text) || commandWoofMatch.MatchString(tweet.Text) ||
+		commandOinkMatch.MatchString(tweet.Text) || commandQuackMatch.MatchString(tweet.Text) ||
+		commandMooMatch.MatchString(tweet.Text) || commandBaaMatch.MatchString(tweet.Text) {
+		go func() {
+			n := randomInt(30, 120)
+			time.Sleep(time.Duration(n) * time.Second)
+			_, err := twitterAPI.Favorite(tweet.Id)
+			if err != nil {
+				log.Printf("Error while trying to favorite the tweet. Err=%s\n", err.Error())
+			}
+		}()
+	}
+
+	if checkHonkReply(twitterAPI, tweet) {
+		return
+	}
+
+	if commandHonkMatch.MatchString(tweet.Text) {
 		log.Println("Tweet matched honk")
 
 		if strings.Contains(tweet.Text, "RT ") {
@@ -89,37 +119,209 @@ func processHonk(twitterAPI *anaconda.TwitterApi, tweet anaconda.Tweet) {
 			return
 		}
 
-		if checkHonkReply(twitterAPI, tweet) {
-			return
+		mention := tweet.InReplyToScreenName
+		if mention == "" {
+			mention = tweet.User.ScreenName
 		}
 
-		var goose []byte
-		goose = getGoose()
-		if goose == nil {
-			goose = getDefaultGoose()
+		var image []byte
+		var msg string
+		if strings.Contains(tweet.Text, "capybara") {
+			image = getImage("capybara")
+			msg = fmt.Sprintf("@%s Honkbara the Planet", mention)
+		} else {
+			image = getImage("honk")
+			msg = fmt.Sprintf("@%s Honk the Planet #honkbot", mention)
 		}
 
-		replyParams := url.Values{}
-		mediaResponse, err := twitterAPI.UploadMedia(base64.StdEncoding.EncodeToString(goose))
-		if err == nil {
-			replyParams.Set("media_ids", mediaResponse.MediaIDString)
+		if image == nil {
+			image = getDefaultGoose()
 		}
 
-		replyParams.Set("in_reply_to_status_id", tweet.IdStr)
-		replyParams.Set("auto_populate_reply_metadata", "true")
-		replyParams.Set("display_coordinates", "false")
-		msg := fmt.Sprintf("Honk the Planet @%s", tweet.User.ScreenName)
-		result, err := twitterAPI.PostTweet(msg, replyParams)
-		if err != nil {
-			log.Printf("Error while posting the tweet. Err=%s\n", err.Error())
-			return
-		}
-		// to avoid getting rate from twitter in case there are too much replies
-		time.Sleep(1 * time.Second)
-		log.Printf("Tweet posted. TweetID = %s\n", result.IdStr)
-
-	} else {
-		log.Println("No Match for Honk")
+		sendTweet(twitterAPI, tweet.IdStr, msg, image)
 	}
 
+	if commandMeowMatch.MatchString(tweet.Text) {
+		log.Println("Tweet matched meow")
+
+		if strings.Contains(tweet.Text, "RT ") {
+			log.Println("This is a RT dont reply to not flood")
+			return
+		}
+
+		mention := tweet.InReplyToScreenName
+		if mention == "" {
+			mention = tweet.User.ScreenName
+		}
+
+		image := getImage("cat")
+		if image == nil {
+			image = getDefaultGoose()
+		}
+
+		msg := fmt.Sprintf("@%s Meow the Planet #honkbot", mention)
+		sendTweet(twitterAPI, tweet.IdStr, msg, image)
+	}
+
+	if commandPonyMatch.MatchString(tweet.Text) {
+		log.Println("Tweet matched pony")
+
+		if strings.Contains(tweet.Text, "RT ") {
+			log.Println("This is a RT dont reply to not flood")
+			return
+		}
+
+		mention := tweet.InReplyToScreenName
+		if mention == "" {
+			mention = tweet.User.ScreenName
+		}
+
+		image := getPony()
+		if image == nil {
+			image = getDefaultGoose()
+		}
+
+		msg := fmt.Sprintf("@%s #honkbot #pony", mention)
+		sendTweet(twitterAPI, tweet.IdStr, msg, image)
+	}
+
+	if commandWoofMatch.MatchString(tweet.Text) {
+		log.Println("Tweet matched woof")
+
+		if strings.Contains(tweet.Text, "RT ") {
+			log.Println("This is a RT dont reply to not flood")
+			return
+		}
+
+		mention := tweet.InReplyToScreenName
+		if mention == "" {
+			mention = tweet.User.ScreenName
+		}
+
+		image := getImage("dog")
+		if image == nil {
+			image = getDefaultGoose()
+		}
+
+		msg := fmt.Sprintf("@%s woof woof woof #honkbot", mention)
+		sendTweet(twitterAPI, tweet.IdStr, msg, image)
+	}
+
+	if commandOinkMatch.MatchString(tweet.Text) {
+		log.Println("Tweet matched oink")
+
+		if strings.Contains(tweet.Text, "RT ") {
+			log.Println("This is a RT dont reply to not flood")
+			return
+		}
+
+		mention := tweet.InReplyToScreenName
+		if mention == "" {
+			mention = tweet.User.ScreenName
+		}
+
+		image := getImage("pig")
+		if image == nil {
+			image = getDefaultGoose()
+		}
+
+		msg := fmt.Sprintf("@%s oink! oink! #honkbot", mention)
+		sendTweet(twitterAPI, tweet.IdStr, msg, image)
+	}
+
+	if commandQuackMatch.MatchString(tweet.Text) {
+		log.Println("Tweet matched quack")
+
+		if strings.Contains(tweet.Text, "RT ") {
+			log.Println("This is a RT dont reply to not flood")
+			return
+		}
+
+		mention := tweet.InReplyToScreenName
+		if mention == "" {
+			mention = tweet.User.ScreenName
+		}
+
+		image := getImage("duck")
+		if image == nil {
+			image = getDefaultGoose()
+		}
+
+		msg := fmt.Sprintf("@%s quack! quack! #honkbot", mention)
+		sendTweet(twitterAPI, tweet.IdStr, msg, image)
+	}
+
+	if commandMooMatch.MatchString(tweet.Text) {
+		log.Println("Tweet matched moo")
+
+		if strings.Contains(tweet.Text, "RT ") {
+			log.Println("This is a RT dont reply to not flood")
+			return
+		}
+
+		mention := tweet.InReplyToScreenName
+		if mention == "" {
+			mention = tweet.User.ScreenName
+		}
+
+		image := getImage("cow")
+		if image == nil {
+			image = getDefaultGoose()
+		}
+
+		msg := fmt.Sprintf("@%s Mooooo! #honkbot", mention)
+		sendTweet(twitterAPI, tweet.IdStr, msg, image)
+	}
+
+	if commandBaaMatch.MatchString(tweet.Text) {
+		log.Println("Tweet matched baa")
+
+		if strings.Contains(tweet.Text, "RT ") {
+			log.Println("This is a RT dont reply to not flood")
+			return
+		}
+
+		mention := tweet.InReplyToScreenName
+		if mention == "" {
+			mention = tweet.User.ScreenName
+		}
+
+		image := getImage("goat")
+		if image == nil {
+			image = getDefaultGoose()
+		}
+		msg := fmt.Sprintf("@%s baa! baa!! #honkbot", mention)
+		sendTweet(twitterAPI, tweet.IdStr, msg, image)
+	}
+}
+
+func sendTweet(twitterAPI *anaconda.TwitterApi, originalTweetID, message string, image []byte) {
+	n := randomInt(30, 120)
+	log.Printf("Sleeping for %s", time.Duration(n)*time.Second)
+	time.Sleep(time.Duration(n) * time.Second)
+
+	replyParams := url.Values{}
+	msg := message
+	mediaResponse, err := twitterAPI.UploadMedia(base64.StdEncoding.EncodeToString(image))
+	if err != nil {
+		log.Printf("Error uploading the image Err=%s\n", err.Error())
+		msg = fmt.Sprintf("No image :(")
+	} else {
+		replyParams.Set("media_ids", mediaResponse.MediaIDString)
+	}
+
+	replyParams.Set("in_reply_to_status_id", originalTweetID)
+	replyParams.Set("auto_populate_reply_metadata", "true")
+	replyParams.Set("display_coordinates", "false")
+	result, err := twitterAPI.PostTweet(msg, replyParams)
+	if err != nil {
+		log.Printf("Error while posting the tweet. Err=%s\n", err.Error())
+		return
+	}
+	log.Printf("Tweet posted. TweetID = %s\n", result.IdStr)
+}
+
+// Returns an int >= min, < max
+func randomInt(min, max int) int {
+	return min + rand.Intn(max-min)
 }
