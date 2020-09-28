@@ -130,7 +130,7 @@ func processHonk(twitterAPI *anaconda.TwitterApi, tweet anaconda.Tweet) {
 			image = getImage("capybara")
 			msg = fmt.Sprintf("@%s Honkbara the Planet", mention)
 		} else {
-			image = getImage("honk")
+			image = getImage("goose")
 			msg = fmt.Sprintf("@%s Honk the Planet #honkbot", mention)
 		}
 
