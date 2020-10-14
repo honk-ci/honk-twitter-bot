@@ -112,187 +112,66 @@ func processHonk(twitterAPI *anaconda.TwitterApi, tweet anaconda.Tweet) {
 	}
 
 	if commandHonkMatch.MatchString(tweet.Text) {
-		log.Println("Tweet matched honk")
-
-		if strings.Contains(tweet.Text, "RT ") {
-			log.Println("This is a RT dont reply to not flood")
-			return
-		}
-
-		mention := tweet.InReplyToScreenName
-		if mention == "" {
-			mention = tweet.User.ScreenName
-		}
-
-		var image []byte
-		var msg string
 		if strings.Contains(tweet.Text, "capybara") {
-			image = getImage("capybara")
-			msg = fmt.Sprintf("@%s Honkbara the Planet", mention)
+			matchTweet(twitterAPI, tweet, "honk", "capabara", "Honkbara the planet")
 		} else {
-			image = getImage("goose")
-			msg = fmt.Sprintf("@%s Honk the Planet #honkbot", mention)
+			matchTweet(twitterAPI, tweet, "honk", "goose", "Honk the planet")
 		}
-
-		if image == nil {
-			image = getDefaultGoose()
-		}
-
-		sendTweet(twitterAPI, tweet.IdStr, msg, image)
 	}
 
 	if commandMeowMatch.MatchString(tweet.Text) {
-		log.Println("Tweet matched meow")
-
-		if strings.Contains(tweet.Text, "RT ") {
-			log.Println("This is a RT dont reply to not flood")
-			return
-		}
-
-		mention := tweet.InReplyToScreenName
-		if mention == "" {
-			mention = tweet.User.ScreenName
-		}
-
-		image := getImage("cat")
-		if image == nil {
-			image = getDefaultGoose()
-		}
-
-		msg := fmt.Sprintf("@%s Meow the Planet #honkbot", mention)
-		sendTweet(twitterAPI, tweet.IdStr, msg, image)
+		matchTweet(twitterAPI, tweet, "meow", "cat", "Meow the planet")
 	}
 
 	if commandPonyMatch.MatchString(tweet.Text) {
-		log.Println("Tweet matched pony")
-
-		if strings.Contains(tweet.Text, "RT ") {
-			log.Println("This is a RT dont reply to not flood")
-			return
-		}
-
-		mention := tweet.InReplyToScreenName
-		if mention == "" {
-			mention = tweet.User.ScreenName
-		}
-
-		image := getPony()
-		if image == nil {
-			image = getDefaultGoose()
-		}
-
-		msg := fmt.Sprintf("@%s #honkbot #pony", mention)
-		sendTweet(twitterAPI, tweet.IdStr, msg, image)
+		matchTweet(twitterAPI, tweet, "pony", "pony", "#pony")
 	}
 
 	if commandWoofMatch.MatchString(tweet.Text) {
-		log.Println("Tweet matched woof")
-
-		if strings.Contains(tweet.Text, "RT ") {
-			log.Println("This is a RT dont reply to not flood")
-			return
-		}
-
-		mention := tweet.InReplyToScreenName
-		if mention == "" {
-			mention = tweet.User.ScreenName
-		}
-
-		image := getImage("dog")
-		if image == nil {
-			image = getDefaultGoose()
-		}
-
-		msg := fmt.Sprintf("@%s woof woof woof #honkbot", mention)
-		sendTweet(twitterAPI, tweet.IdStr, msg, image)
+		matchTweet(twitterAPI, tweet, "woof", "dog", "woof woof woof")
 	}
 
 	if commandOinkMatch.MatchString(tweet.Text) {
-		log.Println("Tweet matched oink")
-
-		if strings.Contains(tweet.Text, "RT ") {
-			log.Println("This is a RT dont reply to not flood")
-			return
-		}
-
-		mention := tweet.InReplyToScreenName
-		if mention == "" {
-			mention = tweet.User.ScreenName
-		}
-
-		image := getImage("pig")
-		if image == nil {
-			image = getDefaultGoose()
-		}
-
-		msg := fmt.Sprintf("@%s oink! oink! #honkbot", mention)
-		sendTweet(twitterAPI, tweet.IdStr, msg, image)
+		matchTweet(twitterAPI, tweet, "oink", "pig", "oink! oink!")
 	}
 
 	if commandQuackMatch.MatchString(tweet.Text) {
-		log.Println("Tweet matched quack")
-
-		if strings.Contains(tweet.Text, "RT ") {
-			log.Println("This is a RT dont reply to not flood")
-			return
-		}
-
-		mention := tweet.InReplyToScreenName
-		if mention == "" {
-			mention = tweet.User.ScreenName
-		}
-
-		image := getImage("duck")
-		if image == nil {
-			image = getDefaultGoose()
-		}
-
-		msg := fmt.Sprintf("@%s quack! quack! #honkbot", mention)
-		sendTweet(twitterAPI, tweet.IdStr, msg, image)
+		matchTweet(twitterAPI, tweet, "quack", "duck", "quack! quack!")
 	}
 
 	if commandMooMatch.MatchString(tweet.Text) {
-		log.Println("Tweet matched moo")
-
-		if strings.Contains(tweet.Text, "RT ") {
-			log.Println("This is a RT dont reply to not flood")
-			return
-		}
-
-		mention := tweet.InReplyToScreenName
-		if mention == "" {
-			mention = tweet.User.ScreenName
-		}
-
-		image := getImage("cow")
-		if image == nil {
-			image = getDefaultGoose()
-		}
-
-		msg := fmt.Sprintf("@%s Mooooo! #honkbot", mention)
-		sendTweet(twitterAPI, tweet.IdStr, msg, image)
+		matchTweet(twitterAPI, tweet, "moo", "cow", "Mooooo!")
 	}
 
 	if commandBaaMatch.MatchString(tweet.Text) {
-		log.Println("Tweet matched baa")
-
-		if strings.Contains(tweet.Text, "RT ") {
-			log.Println("This is a RT dont reply to not flood")
-			return
-		}
-
-		mention := tweet.InReplyToScreenName
-		if mention == "" {
-			mention = tweet.User.ScreenName
-		}
-
-		image := getImage("goat")
-		if image == nil {
-			image = getDefaultGoose()
-		}
-		msg := fmt.Sprintf("@%s baa! baa!! #honkbot", mention)
-		sendTweet(twitterAPI, tweet.IdStr, msg, image)
+		matchTweet(twitterAPI, tweet, "baa", "goat", "baa! baa!!")
 	}
+}
+
+func matchTweet(twitterAPI *anaconda.TwitterApi, tweet anaconda.Tweet, matched, animal, message string) {
+	log.Printf("Tweet matched %v", matched)
+
+	if strings.Contains(tweet.Text, "RT ") {
+		log.Println("This is a RT dont reply to not flood")
+	}
+
+	mention := tweet.InReplyToScreenName
+	if mention == "" {
+		mention = tweet.User.ScreenName
+	}
+
+	var image []byte
+	switch animal {
+	case "pony":
+		image = getPony()
+	default:
+		image = getImage(animal)
+	}
+	if image == nil {
+		image = getDefaultGoose()
+	}
+	msg := fmt.Sprintf("@%s %v #honkbot", mention, message)
+	sendTweet(twitterAPI, tweet.IdStr, msg, image)
 }
 
 func sendTweet(twitterAPI *anaconda.TwitterApi, originalTweetID, message string, image []byte) {
