@@ -319,7 +319,7 @@ func processHonk(twitterAPI *anaconda.TwitterApi, tweet anaconda.Tweet) {
 	}
 
 	if commandSnekMatch.MatchString(tweet.Text) {
-		log.Println("Tweet matched sneck")
+		log.Println("Tweet matched snek")
 
 		if strings.Contains(tweet.Text, "RT ") {
 			log.Println("This is a RT dont reply to not flood")
