@@ -242,7 +242,7 @@ func processHonk(twitterAPI *anaconda.TwitterApi, tweet anaconda.Tweet) {
 			mention = tweet.User.ScreenName
 		}
 
-		image := getImage("duck")
+		image := getImage("baby duck")
 		if image == nil {
 			image = getDefaultGoose()
 		}
